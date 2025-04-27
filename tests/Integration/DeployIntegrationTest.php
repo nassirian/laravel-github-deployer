@@ -8,7 +8,7 @@ use Nassirian\GitHubDeployer\Tests\TestCase;
 class DeployIntegrationTest extends TestCase
 {
     /** @test */
-    public function it_executes_real_commands_successfully()
+    public function test_it_executes_real_commands_successfully()
     {
         config([
             'github-deployer.pre_deploy_commands' => ['echo "Pre Deploy Successful"'],
@@ -26,7 +26,7 @@ class DeployIntegrationTest extends TestCase
     }
 
     /** @test */
-    public function it_stops_if_a_real_command_fails()
+    public function test_it_stops_if_a_real_command_fails()
     {
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Command failed');

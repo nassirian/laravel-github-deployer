@@ -7,7 +7,7 @@ use Nassirian\GitHubDeployer\Services\GitPullAndDockerDeployer;
 class DeployerTest extends TestCase
 {
     /** @test */
-    public function it_runs_pre_deploy_and_deploy_and_post_deploy_commands()
+    public function test_it_runs_pre_deploy_and_deploy_and_post_deploy_commands()
     {
         config([
             'github-deployer.pre_deploy_commands' => ['echo "Pre Deploy Command"'],
@@ -29,7 +29,7 @@ class DeployerTest extends TestCase
     }
 
     /** @test */
-    public function it_stops_deploy_if_command_fails()
+    public function test_it_stops_deploy_if_command_fails()
     {
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Command failed');

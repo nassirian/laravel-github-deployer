@@ -10,7 +10,7 @@ use Mockery;
 class WebhookTest extends TestCase
 {
     /** @test */
-    public function it_handles_valid_webhook_and_triggers_deploy()
+    public function test_it_handles_valid_webhook_and_triggers_deploy()
     {
 
         // Prepare a secret and sign payload
@@ -42,7 +42,7 @@ class WebhookTest extends TestCase
     }
 
     /** @test */
-    public function it_rejects_invalid_signature_webhook()
+    public function test_it_rejects_invalid_signature_webhook()
     {
 
 
