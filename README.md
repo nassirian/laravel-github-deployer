@@ -102,7 +102,7 @@ GITHUB_WEBHOOK_SECRET=your-secret-here
 ## 📚 Requirements
 
 - PHP 8.0+
-- Laravel 8.x, 9.x, 10.x
+- Laravel 8.x, 9.x, 10.x, 11.x , 12.x
 - Composer installed on your server
 - (Optional) Docker installed if you use `docker-compose`
 
