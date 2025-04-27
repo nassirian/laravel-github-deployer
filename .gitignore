@@ -1,0 +1,16 @@
+/vendor/
+/node_modules/
+/.env
+.env.*
+.phpunit.result.cache
+coverage/
+/.idea/
+Homestead.json
+Homestead.yaml
+/public/storage
+/storage/*.key
+/storage/debugbar
+.DS_Store
+*.log
+*.sqlite
+composer.lock
