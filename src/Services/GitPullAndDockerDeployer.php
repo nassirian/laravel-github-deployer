@@ -2,7 +2,9 @@
 
 namespace Nassirian\GitHubDeployer\Services;
 
-class GitPullAndDockerDeployer implements \Nassirian\GitHubDeployer\Contracts\DeployerInterface
+use Nassirian\GitHubDeployer\Contracts\DeployerInterface;
+
+class GitPullAndDockerDeployer implements DeployerInterface
 {
 
     public function deploy(): string

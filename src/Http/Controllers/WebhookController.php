@@ -3,7 +3,6 @@
 namespace Nassirian\GitHubDeployer\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
 use Nassirian\GitHubDeployer\Contracts\DeployerInterface;
 use Illuminate\Routing\Controller;
