@@ -14,8 +14,8 @@ class EnsureDeployQueue
 
         if ($job->queue !== $expectedQueue) {
             Log::warning("Deploy job picked up by wrong queue: {$job->queue} (expected: {$expectedQueue})");
-            $job->delete();
-            return;
+            $job->release();
+            return false;
         }
 
         return $next($job);
