@@ -1,6 +1,6 @@
 # Laravel GitHub Deployer
 [![Latest Version](https://img.shields.io/packagist/v/nassirian/laravel-github-deployer.svg?style=flat-square)](https://packagist.org/packages/nassirian/laravel-github-deployer)
-[![Build Status](https://github.com/nassirian/laravel-github-deployer/actions/workflows/run-tests.yml/badge.svg)](https://github.com/nassirian/laravel-github-deployer/actions)
+[![Build Status](https://github.com/nassirian/laravel-github-deployer/actions/workflows/tests.yml/badge.svg)](https://github.com/nassirian/laravel-github-deployer/actions)
 [![License](https://img.shields.io/github/license/nassirian/laravel-github-deployer.svg?style=flat-square)](https://github.com/nassirian/laravel-github-deployer/blob/main/LICENSE)
 
 **Simple and flexible Laravel package** to automate deployments using **GitHub Webhooks**.
