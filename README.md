@@ -1,19 +1,27 @@
 # Laravel GitHub Deployer
+[![Latest Version](https://img.shields.io/packagist/v/nassirian/laravel-github-deployer.svg?style=flat-square)](https://packagist.org/packages/nassirian/laravel-github-deployer)
+[![Build Status](https://github.com/nassirian/laravel-github-deployer/actions/workflows/run-tests.yml/badge.svg)](https://github.com/nassirian/laravel-github-deployer/actions)
+[![License](https://img.shields.io/github/license/nassirian/laravel-github-deployer.svg?style=flat-square)](https://github.com/nassirian/laravel-github-deployer/blob/main/LICENSE)
 
-**Simple Laravel package** to automate server deployment via **GitHub Webhooks**.
-Every push to your GitHub repo can trigger automatic:
+**Simple and flexible Laravel package** to automate deployments using **GitHub Webhooks**.
+
+This package supports both:
+
+- 🔁 Synchronous deployments (runs directly on the server)
+- 🧵 Queue-based deployments (offloaded to dedicated queue workers — e.g., Docker container or remote worker)
+
+### ✅ Features
+
 - Git pull
 - Composer install
 - Docker container restart
-- Laravel migrations & cache clearing
-
-✅ No external server, no SSH needed — all handled by a secure webhook.
+- Laravel migrations, route/config caching
+- Dedicated `deploy` queue support
+- Secure signature verification from GitHub
 
 ---
 
 ## 📦 Installation
-
-Install the package via Composer:
 
 ```bash
 composer require nassirian/laravel-github-deployer
@@ -21,90 +29,142 @@ composer require nassirian/laravel-github-deployer
 
 ---
 
-## ⚙️ Publish Config (optional)
+## ⚙️ Configuration (Optional)
 
-You can publish the config file if you want to customize the commands:
+Publish the config file to customize deployment behavior:
 
 ```bash
 php artisan vendor:publish --tag=config
 ```
 
-It will create `config/github-deployer.php`:
+This creates: `config/github-deployer.php`
 
 ```php
 return [
-    'pre_deploy_commands' => [
-        // Example: 'php artisan down',
+
+    // 'sync' will run directly on server, 'queue' will dispatch a job to deploy queue
+    'mode' => env('DEPLOY_MODE', 'queue'),
+
+    // Deploy queue name for queue-based mode
+    'queue_name' => env('DEPLOY_QUEUE', 'deploy'),
+
+    // Optional job middleware (e.g., throttle or queue isolation)
+    'middleware' => [
+        \Nassirian\GitHubDeployer\Middleware\EnsureDeployQueue::class,
     ],
+
+    // Commands to run before deploy
+    'pre_deploy_commands' => [],
+
+    // Main deploy commands
     'deploy_commands' => [
         'git pull origin main',
         'composer install --no-interaction --prefer-dist --optimize-autoloader',
         'docker-compose pull',
         'docker-compose up -d',
     ],
+
+    // Post-deploy artisan commands
     'post_deploy_commands' => [
         'php artisan migrate --force',
         'php artisan config:cache',
         'php artisan route:cache',
+    ],
+
+    // Optional throttle behavior for wrong queue workers
+    'deploy_release_throttle' => [
+        'base_delay' => 5,
+        'max_attempts' => 5,
     ],
 ];
 ```
 
 ---
 
-## 🛠️ Setting Up the Webhook
+## 📡 GitHub Webhook Setup
 
-1. **Expose your server's webhook endpoint**:  
-   Your app will listen at:
+1. **Expose your webhook route**
 
-   ```
-   POST /github/webhook
-   ```
+Laravel will respond to:
 
-2. **Create a GitHub Webhook**:
-    - Go to your GitHub repository → **Settings** → **Webhooks** → **Add webhook**.
-    - Payload URL:
-      ```
-      https://your-domain.com/github/webhook
-      ```
-    - Content type: `application/json`
-    - Secret: (choose any secret key)
-    - Events: **Just the Push event**
+```
+POST /github/webhook
+```
 
-3. **Set the webhook secret** in your Laravel `.env`:
+2. **Add Webhook in GitHub**:
+   - Go to **Repo Settings → Webhooks → Add Webhook**
+   - Payload URL: `https://your-domain.com/github/webhook`
+   - Content type: `application/json`
+   - Secret: `your-random-string`
+   - Events: ✅ Push event only
+
+3. **Set secret in `.env`:**
 
 ```env
-GITHUB_WEBHOOK_SECRET=your-secret-here
+GITHUB_WEBHOOK_SECRET=your-random-string
+```
+
+---
+
+## ⚙️ Sync vs Queue Mode
+
+| Mode | Description |
+|------|-------------|
+| `sync` | Runs deployment commands immediately in the HTTP request (for small projects or simple VPS) |
+| `queue` | Dispatches a background job to the `deploy` queue (best for Docker, Horizon, supervisors) |
+
+Set this in your `.env`:
+
+```env
+DEPLOY_MODE=queue
+DEPLOY_QUEUE=deploy
+```
+
+Then, in `supervisord` or Docker, run:
+
+```bash
+php artisan queue:work --queue=deploy
 ```
 
 ---
 
 ## ✅ How It Works
 
-1. GitHub sends a push event to your server.
-2. Laravel verifies the signature.
-3. If valid:
-    - It runs all `pre_deploy_commands` first (optional)
-    - It runs all `deploy_commands` (git pull, composer install, docker-compose, etc.)
-    - It runs all `post_deploy_commands` (Laravel migrations, cache clear)
-4. Deployment complete ✅
+1. GitHub sends a webhook → `/github/webhook`
+2. Laravel verifies the HMAC signature
+3. Based on config mode:
+   - `sync`: Runs the deploy shell commands right away
+   - `queue`: Dispatches a background job to the `deploy` queue
+4. Commands are run in 3 phases:
+   - `pre_deploy_commands`
+   - `deploy_commands`
+   - `post_deploy_commands`
 
 ---
 
-## 📚 Configuration Notes
+## 📚 Tips & Extensions
 
-- **You control everything** inside `config/github-deployer.php`.
-- If you need to add `npm install && npm run build`, just add to `deploy_commands`.
-- If you need to restart queues or clear extra caches, add to `post_deploy_commands`.
+- Need `npm run build`? Add it to `deploy_commands`
+- Want zero-downtime? Use `php artisan down` / `up` in `pre/post`
+- Using Horizon? Just isolate `deploy` workers separately
 
 ---
 
-## 📚 Requirements
+## 🔐 Security
 
-- PHP 8.0+
-- Laravel 8.x, 9.x, 10.x, 11.x , 12.x
-- Composer installed on your server
-- (Optional) Docker installed if you use `docker-compose`
+- Verifies GitHub `X-Hub-Signature-256`
+- Jobs can self-check queue name (`EnsureDeployQueue`)
+- Workers on wrong queues will back off with throttling
+
+---
+
+## 📋 Requirements
+
+- PHP 8.1+
+- Laravel 9.x → 12.x
+- GitHub webhook support
+- Docker (optional)
+- Supervisor or Horizon (for queue mode)
 
 ---
 
@@ -114,20 +174,21 @@ This package is open-sourced under the [MIT license](LICENSE).
 
 ---
 
-# ✨ Quick Example
-
-**Default deploy flow:**
+## ✨ Deployment Flow Example
 
 ```plaintext
 GitHub Push →
 Webhook triggered →
-git pull →
-composer install →
-docker-compose pull →
-docker-compose up -d →
-php artisan migrate →
-php artisan config:cache →
-php artisan route:cache
+Dispatch Job →
+Run:
+  git pull
+  composer install
+  docker-compose pull
+  docker-compose up -d
+  php artisan migrate
+  php artisan config:cache
+  php artisan route:cache
 ```
 
-Fully automated!
+Fully automated. No manual SSH. No downtime.  
+🔥 Your deployments are now modern and effortless.

@@ -20,6 +20,22 @@ class WebhookController extends Controller
      */
     public function handle(Request $request): \Illuminate\Http\JsonResponse
     {
+
+        // Validate the request signature
+        $this->validateSignature($request);
+        $output = $this->deployer->deploy();
+
+        Log::info('GitHub webhook triggered deployment.', ['output' => $output]);
+
+        return response()->json(['status' => 'success', 'output' => $output]);
+    }
+
+    /**
+     * @param  Request  $request
+     * @return void
+     */
+    protected function validateSignature(Request $request): void
+    {
         $secret = config('app.github_webhook_secret', env('GITHUB_WEBHOOK_SECRET'));
         $signature = 'sha256=' . hash_hmac('sha256', $request->getContent(), $secret);
 
@@ -27,11 +43,5 @@ class WebhookController extends Controller
             Log::warning('GitHub webhook signature mismatch.');
             abort(403, 'Unauthorized.');
         }
-
-        $output = $this->deployer->deploy();
-
-        Log::info('GitHub webhook triggered deployment.', ['output' => $output]);
-
-        return response()->json(['status' => 'success', 'output' => $output]);
     }
 }

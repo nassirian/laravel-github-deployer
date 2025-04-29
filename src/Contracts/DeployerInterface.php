@@ -5,7 +5,7 @@ namespace Nassirian\GitHubDeployer\Contracts;
 interface DeployerInterface
 {
     /**
-     * @return string
+     * @return array
      */
-    public function deploy(): string;
+    public function deploy(): array;
 }
